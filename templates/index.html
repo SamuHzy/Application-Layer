@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wire — Application Layer Visualizer</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<header>
+  <div class="brand"><span class="dot"></span>wire</div>
+  <div class="sub">application-layer activity &amp; protocol visualizer — Flask backend</div>
+</header>
+
+<main>
+  <!-- LEFT: ACTIVITY PANEL -->
+  <section class="panel">
+    <div class="panel-title"><span>ACTIVITY</span><span id="clock">00:00:00.000</span></div>
+
+    <div class="tabs" id="tabs">
+      <div class="tab active" data-mode="browse">Browsing</div>
+      <div class="tab" data-mode="mail">Mail</div>
+      <div class="tab" data-mode="stream">Streaming</div>
+    </div>
+
+    <div class="field-group mode-panel" id="panel-browse">
+      <label for="url-input">Address</label>
+      <input type="text" id="url-input" value="www.example.com/index.html">
+      <button class="btn" id="visit-btn">Visit page</button>
+    </div>
+
+    <div class="field-group mode-panel" id="panel-mail" style="display:none;">
+      <label for="mail-to">To</label>
+      <input type="text" id="mail-to" value="[email protected]">
+      <label for="mail-subject">Subject</label>
+      <input type="text" id="mail-subject" value="Assignment submission">
+      <label for="mail-body">Body</label>
+      <textarea id="mail-body">Hi Professor, please find my dashboard attached.</textarea>
+      <button class="btn" id="send-btn">Send email</button>
+    </div>
+
+    <div class="field-group mode-panel" id="panel-stream" style="display:none;">
+      <label for="stream-url">Stream</label>
+      <input type="text" id="stream-url" value="video.example.com/nature-4k">
+      <label for="quality-select">Quality</label>
+      <select id="quality-select">
+        <option value="1080p">1080p — 5.0 Mbps</option>
+        <option value="720p" selected>720p — 2.8 Mbps</option>
+        <option value="480p">480p — 1.2 Mbps</option>
+      </select>
+      <div class="player">
+        <div class="screen"><span id="player-label">stopped</span><div class="bar" id="player-bar"></div></div>
+        <div class="row">
+          <button class="btn" id="play-btn" style="flex:1;">Play</button>
+          <button class="btn secondary" id="pause-btn" style="flex:1;" disabled>Pause</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="status-line idle" id="status-line">idle — choose an activity and run it</div>
+
+    <div class="divider"></div>
+
+    <div class="panel-title"><span>ACTIVITY LOG</span></div>
+    <div class="log" id="activity-log">
+      <div class="log-empty">no activity yet</div>
+    </div>
+  </section>
+
+  <!-- RIGHT: PROTOCOL VISUALIZER -->
+  <section class="panel">
+    <div class="viz-header">
+      <div class="panel-title" style="padding:0;"><span>PROTOCOL EXCHANGE</span></div>
+      <div class="legend">
+        <span><i style="background:var(--c2s)"></i>client → server</span>
+        <span><i style="background:var(--s2c)"></i>server → client</span>
+      </div>
+    </div>
+
+    <div class="viz-controls" id="viz-controls" style="display:none;">
+      <button class="icon-btn" id="prev-btn" title="Step back">⏮</button>
+      <button class="icon-btn wide" id="playpause-btn" title="Play / pause">▶ Play</button>
+      <button class="icon-btn" id="next-btn" title="Step forward">⏭</button>
+      <button class="icon-btn wide" id="replay-btn" title="Replay from start">↺ Replay</button>
+      <span class="step-counter" id="step-counter">0 / 0</span>
+    </div>
+
+    <div class="progress-track" id="overall-progress" style="display:none;">
+      <div class="progress-fill" id="overall-progress-fill"></div>
+    </div>
+
+    <div class="empty-viz" id="empty-viz">
+      run an activity on the left —<br>the messages exchanged at the application layer will appear here, step by step.
+    </div>
+
+    <div class="timeline" id="timeline" style="display:none;"></div>
+  </section>
+</main>
+
+<footer>backend: Flask (Python) builds each DNS / HTTP / SMTP message sequence in protocols.py and serves it as JSON — the browser only handles animation and layout.</footer>
+
+<script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
