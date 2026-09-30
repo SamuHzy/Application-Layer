@@ -65,12 +65,68 @@
   var nextBtn = document.getElementById('next-btn');
   var playPauseBtn = document.getElementById('playpause-btn');
   var replayBtn = document.getElementById('replay-btn');
+  var filterBtns = document.querySelectorAll('#layer-filter .filter-btn');
+  var countAllEl = document.getElementById('count-all');
+  var countL7El = document.getElementById('count-l7');
+  var countL4El = document.getElementById('count-l4');
 
+  var fullSequence = [];
   var sequence = [];
+  var activeLayer = 'all';
   var currentIndex = -1;
   var playing = false;
   var timer = null;
-  var STEP_MS = 1100;
+  var STEP_MS = 650;
+
+  function stepLayer(step){
+    if(step.layer) return step.layer;
+    return (step.proto === 'TCP' || step.proto === 'UDP') ? 'L4' : 'L7';
+  }
+
+  function updateLayerCounts(){
+    var l7 = 0, l4 = 0;
+    fullSequence.forEach(function(s){
+      if(stepLayer(s) === 'L4') l4++;
+      else l7++;
+    });
+    if(countAllEl) countAllEl.textContent = fullSequence.length;
+    if(countL7El) countL7El.textContent = l7;
+    if(countL4El) countL4El.textContent = l4;
+  }
+
+  function applyLayerFilter(revealAll){
+    if(activeLayer === 'all'){
+      sequence = fullSequence.slice();
+    } else {
+      sequence = fullSequence.filter(function(s){ return stepLayer(s) === activeLayer; });
+    }
+    renderTimeline();
+    if(revealAll){
+      currentIndex = sequence.length - 1;
+    } else if(currentIndex >= sequence.length){
+      currentIndex = sequence.length - 1;
+    }
+    updateUiForIndex();
+  }
+
+  filterBtns.forEach(function(btn){
+    btn.addEventListener('click', function(){
+      filterBtns.forEach(function(b){ b.classList.remove('active'); });
+      btn.classList.add('active');
+      activeLayer = btn.dataset.layer || 'all';
+      if(fullSequence.length > 0){
+        var wasPlaying = playing;
+        stopPlaying();
+        // If playback had already started or finished, reveal matching steps immediately
+        applyLayerFilter(!wasPlaying && currentIndex >= 0);
+        if(wasPlaying){
+          currentIndex = -1;
+          updateUiForIndex();
+          startPlaying();
+        }
+      }
+    });
+  });
 
   function dirColor(dir){ return dir==='c2s' ? 'var(--c2s)' : 'var(--s2c)'; }
   function dirLabel(dir){ return dir==='c2s' ? 'client → server' : 'server → client'; }
@@ -78,8 +134,11 @@
   function renderTimeline(){
     timelineEl.innerHTML = '';
     sequence.forEach(function(step, i){
+      var layer = stepLayer(step);
+      var layerClass = layer.toLowerCase();
+      var layerBadgeText = layer === 'L4' ? 'L4 TRANSPORT' : 'L7 APP';
       var wrap = document.createElement('div');
-      wrap.className = 'step';
+      wrap.className = 'step layer-' + layerClass;
       wrap.style.setProperty('--dir-color', dirColor(step.dir));
       wrap.id = 'step-'+i;
       wrap.innerHTML =
@@ -87,7 +146,10 @@
           '<div class="rail"><div class="node"></div><div class="connector"></div></div>'+
           '<div class="msg-card">'+
             '<div class="msg-meta">'+
-              '<span class="msg-proto">'+step.proto+'</span>'+
+              '<div class="msg-badges">'+
+                '<span class="msg-layer '+layerClass+'">'+layerBadgeText+'</span>'+
+                '<span class="msg-proto">'+escHtml(step.proto)+'</span>'+
+              '</div>'+
               '<span class="msg-dir">'+(step.dir==='c2s'?'→':'←')+' '+dirLabel(step.dir)+'</span>'+
               '<span class="msg-time">t + '+step.time+'ms</span>'+
             '</div>'+
@@ -104,8 +166,9 @@
       el.classList.toggle('revealed', i<=currentIndex);
       el.classList.toggle('current', i===currentIndex);
     });
-    stepCounterEl.textContent = (currentIndex+1)+' / '+sequence.length;
-    var pct = sequence.length ? ((currentIndex+1)/sequence.length*100) : 0;
+    var shown = sequence.length ? (currentIndex+1) : 0;
+    stepCounterEl.textContent = shown+' / '+sequence.length;
+    var pct = sequence.length ? (shown/sequence.length*100) : 0;
     overallProgressFill.style.width = pct+'%';
     prevBtn.disabled = currentIndex<=0;
     nextBtn.disabled = currentIndex>=sequence.length-1;
@@ -160,14 +223,15 @@
   replayBtn.addEventListener('click', replay);
 
   function loadSequence(seq, statusText){
-    sequence = seq;
+    stopPlaying();
+    fullSequence = seq || [];
+    updateLayerCounts();
     currentIndex = -1;
     emptyVizEl.style.display = 'none';
     timelineEl.style.display = 'flex';
     vizControls.style.display = 'flex';
     overallProgress.style.display = 'block';
-    renderTimeline();
-    updateUiForIndex();
+    applyLayerFilter(false);
     setStatus(statusText, true);
     startPlaying();
   }

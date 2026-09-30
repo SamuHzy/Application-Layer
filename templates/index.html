@@ -10,7 +10,7 @@
 
 <header>
   <div class="brand"><span class="dot"></span>wire</div>
-  <div class="sub">application-layer activity &amp; protocol visualizer — Flask backend</div>
+  <div class="sub">application &amp; transport layer (L7 + L4) protocol visualizer — Flask backend</div>
 </header>
 
 <main>
@@ -68,22 +68,30 @@
     </div>
   </section>
 
-  <!-- RIGHT: PROTOCOL VISUALIZER -->
+  <!-- RIGHT: PROTOCOL VISUALIZER / INSPECTOR -->
   <section class="panel">
     <div class="viz-header">
-      <div class="panel-title" style="padding:0;"><span>PROTOCOL EXCHANGE</span></div>
+      <div class="panel-title" style="padding:0;"><span>PROTOCOL EXCHANGE &amp; INSPECTOR</span></div>
       <div class="legend">
         <span><i style="background:var(--c2s)"></i>client → server</span>
         <span><i style="background:var(--s2c)"></i>server → client</span>
       </div>
     </div>
 
-    <div class="viz-controls" id="viz-controls" style="display:none;">
-      <button class="icon-btn" id="prev-btn" title="Step back">⏮</button>
-      <button class="icon-btn wide" id="playpause-btn" title="Play / pause">▶ Play</button>
-      <button class="icon-btn" id="next-btn" title="Step forward">⏭</button>
-      <button class="icon-btn wide" id="replay-btn" title="Replay from start">↺ Replay</button>
-      <span class="step-counter" id="step-counter">0 / 0</span>
+    <div class="inspector-bar">
+      <div class="layer-filter" id="layer-filter" role="tablist" aria-label="Layer Filter">
+        <button class="filter-btn active" data-layer="all" type="button">All Layers <span class="count" id="count-all">0</span></button>
+        <button class="filter-btn" data-layer="L7" type="button">L7 Application <span class="count" id="count-l7">0</span></button>
+        <button class="filter-btn" data-layer="L4" type="button">L4 Transport <span class="count" id="count-l4">0</span></button>
+      </div>
+
+      <div class="viz-controls" id="viz-controls" style="display:none;">
+        <button class="icon-btn" id="prev-btn" title="Step back">⏮</button>
+        <button class="icon-btn wide" id="playpause-btn" title="Play / pause">▶ Play</button>
+        <button class="icon-btn" id="next-btn" title="Step forward">⏭</button>
+        <button class="icon-btn wide" id="replay-btn" title="Replay from start">↺ Replay</button>
+        <span class="step-counter" id="step-counter">0 / 0</span>
+      </div>
     </div>
 
     <div class="progress-track" id="overall-progress" style="display:none;">
@@ -91,14 +99,14 @@
     </div>
 
     <div class="empty-viz" id="empty-viz">
-      run an activity on the left —<br>the messages exchanged at the application layer will appear here, step by step.
+      run an activity on the left —<br>both L7 Application (DNS, HTTP, SMTP) and L4 Transport (UDP, TCP handshake, PSH-ACK &amp; FIN-ACK) events will appear here, step by step.
     </div>
 
     <div class="timeline" id="timeline" style="display:none;"></div>
   </section>
 </main>
 
-<footer>backend: Flask (Python) builds each DNS / HTTP / SMTP message sequence in protocols.py and serves it as JSON — the browser only handles animation and layout.</footer>
+<footer>backend: Flask (Python) builds each L7 (DNS / HTTP / SMTP) &amp; L4 (UDP / TCP) message sequence in protocols.py and serves it as JSON — use the Layer Filter to inspect All Layers, L7 Application, or L4 Transport.</footer>
 
 <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
